@@ -1,0 +1,38 @@
+bbb-video-download Integration into greenlight.
+
+adapted from https://gitlab.rlp.net/rzht-public/3b-download
+
+The original /etc/nginx/snippets/greenlight.nginx has to be adapted
+with the changes like the example in this directory:
+
+This has to be changed at the start of the file:
+
+location /b {
+  sub_filter '<!-- Global javascript variables and helpers. -->'
+             '<!-- Global javascript variables and helpers. --><script src="/bbb-download/injector.js?$pid" data-turbolinks-track="reload"></script>';
+
+This has to be added (at the end):
+
+location /bbb-download {
+  alias /opt/bbb-download/htdocs;
+#  try_files $uri $uri/ @nested;
+  location ~ \.php$ {
+      include snippets/fastcgi-php.conf;
+      fastcgi_param SCRIPT_FILENAME $request_filename;
+      fastcgi_pass unix:/run/php/php7.3-fpm.sock;
+  }
+  location ~ /\.ht {
+      deny all;
+  }
+  index index.php;
+  add_header Last-Modified $date_gmt;
+  if_modified_since off;
+  etag off;
+}
+location /bbb-download/file/ {
+  internal;
+  alias /path-to-recordings/published/presentation/;
+}
+
+php-fpm has to be enabled in nginx.
+
